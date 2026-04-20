@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken');
-const { sqliteDb } = require('../config/database');
+const { getDb } = require('../config/database');
 
 const authenticateToken = (req, res, next) => {
   const authHeader = req.headers['authorization'];
@@ -14,7 +14,12 @@ const authenticateToken = (req, res, next) => {
       return res.status(403).json({ error: '令牌无效或已过期' });
     }
     
-    sqliteDb.get(`SELECT * FROM users WHERE id = ?`, [user.id], (dbErr, row) => {
+    const db = getDb();
+    if (!db) {
+      return res.status(500).json({ error: '数据库未初始化' });
+    }
+    
+    db.get(`SELECT * FROM users WHERE id = ?`, [user.id], (dbErr, row) => {
       if (dbErr || !row) {
         return res.status(403).json({ error: '用户不存在' });
       }

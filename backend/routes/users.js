@@ -1,12 +1,17 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
-const { sqliteDb } = require('../config/database');
+const { getDb } = require('../config/database');
 const { authenticateToken, requireAdmin } = require('../middleware/auth');
 
 const router = express.Router();
 
 router.get('/', authenticateToken, requireAdmin, (req, res) => {
-  sqliteDb.all(
+  const db = getDb();
+  if (!db) {
+    return res.status(500).json({ error: '数据库未初始化' });
+  }
+
+  db.all(
     `SELECT id, username, role, created_at, updated_at FROM users`,
     (err, rows) => {
       if (err) {
@@ -19,8 +24,12 @@ router.get('/', authenticateToken, requireAdmin, (req, res) => {
 
 router.get('/:id', authenticateToken, requireAdmin, (req, res) => {
   const { id } = req.params;
+  const db = getDb();
+  if (!db) {
+    return res.status(500).json({ error: '数据库未初始化' });
+  }
 
-  sqliteDb.get(
+  db.get(
     `SELECT id, username, role, created_at, updated_at FROM users WHERE id = ?`,
     [id],
     (err, row) => {
@@ -46,10 +55,15 @@ router.post('/', authenticateToken, requireAdmin, (req, res) => {
     return res.status(400).json({ error: '密码长度不能少于6位' });
   }
 
+  const db = getDb();
+  if (!db) {
+    return res.status(500).json({ error: '数据库未初始化' });
+  }
+
   const userRole = role === 'admin' ? 'admin' : 'user';
   const hashedPassword = bcrypt.hashSync(password, 10);
 
-  sqliteDb.run(
+  db.run(
     `INSERT INTO users (username, password, role) VALUES (?, ?, ?)`,
     [username, hashedPassword, userRole],
     function(err) {
@@ -74,6 +88,11 @@ router.put('/:id', authenticateToken, requireAdmin, (req, res) => {
 
   if (id === '1' && req.user.id !== 1) {
     return res.status(403).json({ error: '无法修改主管理员账号' });
+  }
+
+  const db = getDb();
+  if (!db) {
+    return res.status(500).json({ error: '数据库未初始化' });
   }
 
   let updates = [];
@@ -107,7 +126,7 @@ router.put('/:id', authenticateToken, requireAdmin, (req, res) => {
   updates.push('updated_at = CURRENT_TIMESTAMP');
   values.push(id);
 
-  sqliteDb.run(
+  db.run(
     `UPDATE users SET ${updates.join(', ')} WHERE id = ?`,
     values,
     function(err) {
@@ -132,7 +151,12 @@ router.delete('/:id', authenticateToken, requireAdmin, (req, res) => {
     return res.status(400).json({ error: '主管理员账号不能删除' });
   }
 
-  sqliteDb.run(`DELETE FROM users WHERE id = ?`, [id], function(err) {
+  const db = getDb();
+  if (!db) {
+    return res.status(500).json({ error: '数据库未初始化' });
+  }
+
+  db.run(`DELETE FROM users WHERE id = ?`, [id], function(err) {
     if (err) {
       return res.status(500).json({ error: '删除用户失败' });
     }
