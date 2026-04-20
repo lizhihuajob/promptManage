@@ -1,7 +1,7 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const { sqliteDb } = require('../config/database');
+const { getDb } = require('../config/database');
 const { authenticateToken, requireAdmin } = require('../middleware/auth');
 
 const router = express.Router();
@@ -13,8 +13,14 @@ router.post('/login', (req, res) => {
     return res.status(400).json({ error: '用户名和密码不能为空' });
   }
 
-  sqliteDb.get(`SELECT * FROM users WHERE username = ?`, [username], (err, row) => {
+  const db = getDb();
+  if (!db) {
+    return res.status(500).json({ error: '数据库未初始化' });
+  }
+
+  db.get(`SELECT * FROM users WHERE username = ?`, [username], (err, row) => {
     if (err) {
+      console.error('登录查询错误:', err);
       return res.status(500).json({ error: '数据库错误' });
     }
 
@@ -23,7 +29,12 @@ router.post('/login', (req, res) => {
     }
 
     bcrypt.compare(password, row.password, (bcryptErr, isMatch) => {
-      if (bcryptErr || !isMatch) {
+      if (bcryptErr) {
+        console.error('密码比对错误:', bcryptErr);
+        return res.status(401).json({ error: '用户名或密码错误' });
+      }
+
+      if (!isMatch) {
         return res.status(401).json({ error: '用户名或密码错误' });
       }
 
@@ -57,7 +68,12 @@ router.put('/password', authenticateToken, (req, res) => {
     return res.status(400).json({ error: '新密码长度不能少于6位' });
   }
 
-  sqliteDb.get(`SELECT * FROM users WHERE id = ?`, [userId], (err, row) => {
+  const db = getDb();
+  if (!db) {
+    return res.status(500).json({ error: '数据库未初始化' });
+  }
+
+  db.get(`SELECT * FROM users WHERE id = ?`, [userId], (err, row) => {
     if (err) {
       return res.status(500).json({ error: '数据库错误' });
     }
@@ -68,7 +84,7 @@ router.put('/password', authenticateToken, (req, res) => {
       }
 
       const hashedPassword = bcrypt.hashSync(newPassword, 10);
-      sqliteDb.run(
+      db.run(
         `UPDATE users SET password = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
         [hashedPassword, userId],
         (updateErr) => {

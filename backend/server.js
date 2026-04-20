@@ -2,7 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-const { connectMongoDB } = require('./config/database');
+const { connectMongoDB, initializeSQLite } = require('./config/database');
 
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/users');
@@ -31,9 +31,22 @@ app.get('/dashboard', (req, res) => {
   res.sendFile(path.join(__dirname, '../frontend/dashboard.html'));
 });
 
-connectMongoDB().then(() => {
-  app.listen(PORT, () => {
-    console.log(`服务器运行在 http://localhost:${PORT}`);
-    console.log('默认管理员账号: admin / admin123');
-  });
-});
+const startServer = async () => {
+  try {
+    await initializeSQLite();
+    await connectMongoDB();
+    
+    app.listen(PORT, () => {
+      console.log(`========================================`);
+      console.log(`服务器运行在 http://localhost:${PORT}`);
+      console.log(`========================================`);
+      console.log('默认管理员账号: admin / admin123');
+      console.log(`========================================`);
+    });
+  } catch (err) {
+    console.error('启动服务器失败:', err.message);
+    process.exit(1);
+  }
+};
+
+startServer();
