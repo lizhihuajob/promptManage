@@ -1,0 +1,1420 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>提示词管理系统</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    :root {
+      --system-blue: #007AFF;
+      --system-blue-hover: #0066CC;
+      --system-gray: #8E8E93;
+      --system-light-gray: #F2F2F7;
+      --system-red: #FF3B30;
+      --system-red-hover: #E6352B;
+      --system-green: #34C759;
+      --system-green-hover: #2DB34F;
+      --text-primary: #000000;
+      --text-secondary: #8E8E93;
+      --border-color: rgba(0, 0, 0, 0.1);
+      --shadow-color: rgba(0, 0, 0, 0.06);
+      --card-bg: rgba(255, 255, 255, 0.8);
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', Arial, sans-serif;
+      background: linear-gradient(180deg, #F5F5F7 0%, #E8E8ED 100%);
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    .header {
+      background: rgba(255, 255, 255, 0.72);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+      padding: 0 24px;
+      height: 52px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .header-icon {
+      width: 32px;
+      height: 32px;
+      background: linear-gradient(135deg, #007AFF 0%, #5856D6 100%);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .header-icon svg {
+      width: 18px;
+      height: 18px;
+    }
+    .header-title {
+      font-size: 17px;
+      font-weight: 600;
+      color: var(--text-primary);
+      letter-spacing: -0.3px;
+    }
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 6px 12px;
+      border-radius: 8px;
+      transition: background 0.2s;
+    }
+    .user-info:hover {
+      background: rgba(0, 0, 0, 0.04);
+    }
+    .user-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--system-blue) 0%, #5856D6 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 14px;
+      color: white;
+    }
+    .user-name {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+    .btn {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      transition: all 0.2s ease;
+      font-family: inherit;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn-primary {
+      background: var(--system-blue);
+      color: white;
+    }
+    .btn-primary:hover {
+      background: var(--system-blue-hover);
+    }
+    .btn-success {
+      background: var(--system-green);
+      color: white;
+    }
+    .btn-success:hover {
+      background: var(--system-green-hover);
+    }
+    .btn-danger {
+      background: var(--system-red);
+      color: white;
+    }
+    .btn-danger:hover {
+      background: var(--system-red-hover);
+    }
+    .btn-secondary {
+      background: rgba(0, 0, 0, 0.05);
+      color: var(--text-primary);
+    }
+    .btn-secondary:hover {
+      background: rgba(0, 0, 0, 0.08);
+    }
+    .btn-sm {
+      padding: 6px 12px;
+      font-size: 12px;
+    }
+    .btn-ghost {
+      background: transparent;
+      color: var(--system-blue);
+      padding: 6px 10px;
+    }
+    .btn-ghost:hover {
+      background: rgba(0, 122, 255, 0.08);
+    }
+    .btn-ghost-danger {
+      background: transparent;
+      color: var(--system-red);
+      padding: 6px 10px;
+    }
+    .btn-ghost-danger:hover {
+      background: rgba(255, 59, 48, 0.08);
+    }
+    .nav-tabs {
+      display: flex;
+      padding: 8px 20px;
+      background: rgba(255, 255, 255, 0.6);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+      gap: 4px;
+    }
+    .nav-tab {
+      padding: 10px 20px;
+      cursor: pointer;
+      color: var(--text-secondary);
+      font-size: 14px;
+      font-weight: 500;
+      border-radius: 8px;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .nav-tab:hover {
+      color: var(--text-primary);
+      background: rgba(0, 0, 0, 0.04);
+    }
+    .nav-tab.active {
+      color: var(--system-blue);
+      background: rgba(0, 122, 255, 0.08);
+    }
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+    .tab-content {
+      display: none;
+    }
+    .tab-content.active {
+      display: block;
+    }
+    .card {
+      background: var(--card-bg);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-radius: 16px;
+      box-shadow: 0 2px 12px var(--shadow-color);
+      padding: 24px;
+      margin-bottom: 24px;
+      border: 1px solid rgba(255, 255, 255, 0.5);
+    }
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+    .card-title {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text-primary);
+      letter-spacing: -0.4px;
+    }
+    .search-bar {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .search-box {
+      display: flex;
+      align-items: center;
+      background: rgba(0, 0, 0, 0.04);
+      border-radius: 10px;
+      padding: 0 16px;
+      flex: 1;
+      min-width: 280px;
+      max-width: 400px;
+    }
+    .search-icon {
+      color: var(--text-secondary);
+      margin-right: 8px;
+    }
+    .form-control {
+      padding: 12px 0;
+      border: none;
+      background: transparent;
+      font-size: 15px;
+      font-family: inherit;
+      width: 100%;
+      color: var(--text-primary);
+    }
+    .form-control:focus {
+      outline: none;
+    }
+    .form-control::placeholder {
+      color: var(--system-gray);
+    }
+    .select-wrapper {
+      position: relative;
+      min-width: 180px;
+    }
+    .select-wrapper select {
+      width: 100%;
+      padding: 12px 40px 12px 16px;
+      border: none;
+      background: rgba(0, 0, 0, 0.04);
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 500;
+      font-family: inherit;
+      color: var(--text-primary);
+      appearance: none;
+      -webkit-appearance: none;
+      cursor: pointer;
+    }
+    .select-wrapper::after {
+      content: '▼';
+      position: absolute;
+      right: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 10px;
+      color: var(--text-secondary);
+      pointer-events: none;
+    }
+    table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+    }
+    thead {
+      background: rgba(0, 0, 0, 0.02);
+    }
+    th {
+      padding: 14px 16px;
+      text-align: left;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    }
+    th:first-child {
+      border-radius: 10px 0 0 0;
+    }
+    th:last-child {
+      border-radius: 0 10px 0 0;
+    }
+    td {
+      padding: 16px;
+      text-align: left;
+      font-size: 14px;
+      color: var(--text-primary);
+      border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+      vertical-align: middle;
+    }
+    tr:last-child td {
+      border-bottom: none;
+    }
+    tr:hover td {
+      background: rgba(0, 0, 0, 0.02);
+    }
+    .action-buttons {
+      display: flex;
+      gap: 4px;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: -0.2px;
+    }
+    .badge-admin {
+      background: rgba(255, 149, 0, 0.12);
+      color: #FF9500;
+    }
+    .badge-user {
+      background: rgba(0, 122, 255, 0.1);
+      color: var(--system-blue);
+    }
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.4);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 20px;
+    }
+    .modal-overlay.active {
+      display: flex;
+    }
+    .modal {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-radius: 20px;
+      padding: 28px;
+      width: 100%;
+      max-width: 520px;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.6);
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+    .modal-title {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text-primary);
+      letter-spacing: -0.4px;
+    }
+    .modal-close {
+      background: rgba(0, 0, 0, 0.06);
+      border: none;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 18px;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+    .modal-close:hover {
+      background: rgba(0, 0, 0, 0.1);
+      color: var(--text-primary);
+    }
+    .form-group {
+      margin-bottom: 18px;
+    }
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 14px 16px;
+      border: 1.5px solid rgba(0, 0, 0, 0.08);
+      border-radius: 12px;
+      font-size: 15px;
+      font-family: inherit;
+      background: rgba(255, 255, 255, 0.8);
+      color: var(--text-primary);
+      transition: all 0.2s;
+    }
+    .form-group input::placeholder,
+    .form-group textarea::placeholder {
+      color: var(--system-gray);
+    }
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      outline: none;
+      border-color: var(--system-blue);
+      box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.1);
+      background: #FFFFFF;
+    }
+    .form-group textarea {
+      resize: vertical;
+      min-height: 120px;
+      line-height: 1.5;
+    }
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      margin-top: 24px;
+      padding-top: 20px;
+      border-top: 1px solid rgba(0, 0, 0, 0.06);
+    }
+    .toast {
+      position: fixed;
+      top: 80px;
+      right: 24px;
+      padding: 14px 24px;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 500;
+      z-index: 2000;
+      animation: slideIn 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    }
+    .toast.success {
+      background: var(--system-green);
+      color: white;
+    }
+    .toast.error {
+      background: var(--system-red);
+      color: white;
+    }
+    @keyframes slideIn {
+      from {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+    .empty-state {
+      text-align: center;
+      padding: 80px 20px;
+      color: var(--text-secondary);
+    }
+    .empty-state-icon {
+      font-size: 64px;
+      margin-bottom: 20px;
+      opacity: 0.6;
+    }
+    .empty-state-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 8px;
+    }
+    .empty-state-desc {
+      font-size: 14px;
+      color: var(--text-secondary);
+    }
+    .pagination {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+      margin-top: 24px;
+    }
+    .pagination button {
+      padding: 10px 16px;
+      border: 1px solid rgba(0, 0, 0, 0.08);
+      background: white;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      font-family: inherit;
+      color: var(--text-primary);
+      transition: all 0.2s;
+    }
+    .pagination button:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+    .pagination button:hover:not(:disabled) {
+      background: var(--system-blue);
+      color: white;
+      border-color: var(--system-blue);
+    }
+    .pagination-info {
+      color: var(--text-secondary);
+      font-size: 14px;
+      padding: 0 16px;
+    }
+    .prompt-content {
+      max-width: 350px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: var(--text-secondary);
+    }
+    .prompt-name {
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    .group-name {
+      color: var(--system-blue);
+      font-weight: 500;
+    }
+    .stat-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 10px;
+      background: rgba(0, 0, 0, 0.04);
+      border-radius: 6px;
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+    .stat-badge strong {
+      color: var(--text-primary);
+    }
+    .view-prompt-content {
+      background: rgba(0, 0, 0, 0.02);
+      border-radius: 12px;
+      padding: 20px;
+      margin: 16px 0;
+      white-space: pre-wrap;
+      line-height: 1.7;
+      font-size: 14px;
+      color: var(--text-primary);
+      max-height: 400px;
+      overflow-y: auto;
+    }
+    @media (max-width: 768px) {
+      .nav-tabs {
+        overflow-x: auto;
+        padding: 8px 12px;
+      }
+      .nav-tab {
+        flex-shrink: 0;
+        padding: 8px 16px;
+        font-size: 13px;
+      }
+      .container {
+        padding: 16px;
+      }
+      .card {
+        padding: 16px;
+        border-radius: 12px;
+      }
+      .search-bar {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .search-box {
+        min-width: auto;
+        max-width: none;
+      }
+      table {
+        font-size: 12px;
+      }
+      th, td {
+        padding: 12px 10px;
+      }
+      .action-buttons {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <div class="header-left">
+      <div class="header-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+          <line x1="16" y1="13" x2="8" y2="13"/>
+          <line x1="16" y1="17" x2="8" y2="17"/>
+          <polyline points="10 9 9 9 8 9"/>
+        </svg>
+      </div>
+      <span class="header-title">提示词管理</span>
+    </div>
+    <div class="header-right">
+      <div class="user-info">
+        <div class="user-avatar" id="userAvatar">A</div>
+        <span class="user-name" id="userName">用户</span>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="openPasswordModal()">修改密码</button>
+      <button class="btn btn-ghost btn-sm" onclick="logout()">退出</button>
+    </div>
+  </header>
+
+  <nav class="nav-tabs">
+    <div class="nav-tab active" data-tab="prompts" id="tab-prompts" onclick="switchTab('prompts')">
+      <span>📝</span> 提示词管理
+    </div>
+    <div class="nav-tab" data-tab="groups" id="tab-groups" onclick="switchTab('groups')">
+      <span>📁</span> 分组管理
+    </div>
+    <div class="nav-tab" data-tab="users" id="tab-users" style="display:none;" onclick="switchTab('users')">
+      <span>👥</span> 用户管理
+    </div>
+  </nav>
+
+  <div class="container">
+    <div class="tab-content active" id="content-prompts">
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">提示词列表</h2>
+          <button class="btn btn-primary" onclick="openPromptModal()">
+            <span>+</span> 新建提示词
+          </button>
+        </div>
+        <div class="search-bar">
+          <div class="search-box">
+            <span class="search-icon">🔍</span>
+            <input type="text" class="form-control" id="promptKeyword" placeholder="搜索名称或内容..." oninput="loadPrompts()">
+          </div>
+          <div class="select-wrapper">
+            <select id="promptGroupFilter" onchange="loadPrompts()">
+              <option value="">全部分组</option>
+            </select>
+          </div>
+        </div>
+        <div id="promptsTableContainer"></div>
+        <div id="promptsPagination" class="pagination"></div>
+      </div>
+    </div>
+
+    <div class="tab-content" id="content-groups">
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">分组列表</h2>
+          <button class="btn btn-primary" onclick="openGroupModal()">
+            <span>+</span> 新建分组
+          </button>
+        </div>
+        <div id="groupsTableContainer"></div>
+      </div>
+    </div>
+
+    <div class="tab-content" id="content-users">
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">用户列表</h2>
+          <button class="btn btn-primary" onclick="openUserModal()">
+            <span>+</span> 新建用户
+          </button>
+        </div>
+        <div id="usersTableContainer"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="userModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title" id="userModalTitle">新建用户</h3>
+        <button class="modal-close" onclick="closeModal('userModal')">×</button>
+      </div>
+      <form id="userForm">
+        <input type="hidden" id="userId">
+        <div class="form-group">
+          <label>用户名</label>
+          <input type="text" id="userNameInput" required placeholder="请输入用户名">
+        </div>
+        <div class="form-group" id="userPasswordGroup">
+          <label>密码</label>
+          <input type="password" id="userPassword" required placeholder="请输入密码（至少6位）">
+        </div>
+        <div class="form-group">
+          <label>角色</label>
+          <select id="userRole">
+            <option value="user">普通用户</option>
+            <option value="admin">管理员</option>
+          </select>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('userModal')">取消</button>
+          <button type="submit" class="btn btn-primary">保存</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="groupModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title" id="groupModalTitle">新建分组</h3>
+        <button class="modal-close" onclick="closeModal('groupModal')">×</button>
+      </div>
+      <form id="groupForm">
+        <input type="hidden" id="groupId">
+        <div class="form-group">
+          <label>分组名称</label>
+          <input type="text" id="groupName" required placeholder="请输入分组名称">
+        </div>
+        <div class="form-group">
+          <label>描述</label>
+          <textarea id="groupDescription" placeholder="可选的分组描述"></textarea>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('groupModal')">取消</button>
+          <button type="submit" class="btn btn-primary">保存</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="promptModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title" id="promptModalTitle">新建提示词</h3>
+        <button class="modal-close" onclick="closeModal('promptModal')">×</button>
+      </div>
+      <form id="promptForm">
+        <input type="hidden" id="promptId">
+        <div class="form-group">
+          <label>名称</label>
+          <input type="text" id="promptName" required placeholder="请输入提示词名称">
+        </div>
+        <div class="form-group">
+          <label>分组</label>
+          <select id="promptGroup">
+            <option value="">无分组</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>提示词内容</label>
+          <textarea id="promptContent" required style="min-height: 180px;" placeholder="请输入提示词内容"></textarea>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('promptModal')">取消</button>
+          <button type="submit" class="btn btn-primary">保存</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="passwordModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title">修改密码</h3>
+        <button class="modal-close" onclick="closeModal('passwordModal')">×</button>
+      </div>
+      <form id="passwordForm">
+        <div class="form-group">
+          <label>旧密码</label>
+          <input type="password" id="oldPassword" required placeholder="请输入旧密码">
+        </div>
+        <div class="form-group">
+          <label>新密码</label>
+          <input type="password" id="newPassword" required placeholder="请输入新密码（至少6位）">
+        </div>
+        <div class="form-group">
+          <label>确认新密码</label>
+          <input type="password" id="confirmPassword" required placeholder="请再次输入新密码">
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('passwordModal')">取消</button>
+          <button type="submit" class="btn btn-primary">保存</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="viewPromptModal">
+    <div class="modal" style="max-width: 640px;">
+      <div class="modal-header">
+        <h3 class="modal-title" id="viewPromptName">提示词详情</h3>
+        <button class="modal-close" onclick="closeModal('viewPromptModal')">×</button>
+      </div>
+      <div id="viewPromptContent" class="view-prompt-content"></div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" onclick="copyPromptContent()">
+          📋 复制内容
+        </button>
+        <button type="button" class="btn btn-secondary" onclick="closeModal('viewPromptModal')">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = '';
+    let currentUser = null;
+    let currentTab = 'prompts';
+    let currentPage = 1;
+    let pageSize = 20;
+    let groups = [];
+    let currentViewPromptId = null;
+
+    function getToken() {
+      return localStorage.getItem('token');
+    }
+
+    async function apiRequest(url, options = {}) {
+      const token = getToken();
+      const response = await fetch(`${API_BASE}${url}`, {
+        ...options,
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+          ...options.headers
+        }
+      });
+
+      if (response.status === 401) {
+        logout();
+        throw new Error('登录已过期');
+      }
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || '请求失败');
+      }
+      return data;
+    }
+
+    function showToast(message, type = 'success') {
+      const toast = document.createElement('div');
+      toast.className = `toast ${type}`;
+      toast.innerHTML = type === 'success' ? '✓ ' + message : '✕ ' + message;
+      document.body.appendChild(toast);
+      setTimeout(() => toast.remove(), 3000);
+    }
+
+    function switchTab(tab) {
+      currentTab = tab;
+      document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+      document.getElementById(`tab-${tab}`).classList.add('active');
+      document.getElementById(`content-${tab}`).classList.add('active');
+
+      if (tab === 'prompts') {
+        loadGroupsForFilters();
+        loadPrompts();
+      } else if (tab === 'groups') {
+        loadGroups();
+      } else if (tab === 'users') {
+        loadUsers();
+      }
+    }
+
+    function openModal(modalId) {
+      document.getElementById(modalId).classList.add('active');
+    }
+
+    function closeModal(modalId) {
+      document.getElementById(modalId).classList.remove('active');
+    }
+
+    function logout() {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      window.location.href = '/';
+    }
+
+    async function loadCurrentUser() {
+      try {
+        currentUser = await apiRequest('/api/auth/me');
+        document.getElementById('userName').textContent = currentUser.username;
+        document.getElementById('userAvatar').textContent = currentUser.username.charAt(0).toUpperCase();
+
+        if (currentUser.role === 'admin') {
+          document.getElementById('tab-users').style.display = 'flex';
+        }
+      } catch (err) {
+        console.error('加载用户信息失败:', err);
+      }
+    }
+
+    async function loadGroupsForFilters() {
+      try {
+        groups = await apiRequest('/api/groups');
+        const select = document.getElementById('promptGroupFilter');
+        const select2 = document.getElementById('promptGroup');
+        
+        select.innerHTML = '<option value="">全部分组</option>';
+        select2.innerHTML = '<option value="">无分组</option>';
+        
+        groups.forEach(g => {
+          select.innerHTML += `<option value="${g._id}">${escapeHtml(g.name)}</option>`;
+          select2.innerHTML += `<option value="${g._id}">${escapeHtml(g.name)}</option>`;
+        });
+      } catch (err) {
+        console.error('加载分组失败:', err);
+      }
+    }
+
+    async function loadPrompts() {
+      try {
+        const keyword = document.getElementById('promptKeyword').value;
+        const groupId = document.getElementById('promptGroupFilter').value;
+        
+        let url = `/api/prompts?page=${currentPage}&limit=${pageSize}`;
+        if (keyword) url += `&keyword=${encodeURIComponent(keyword)}`;
+        if (groupId) url += `&groupId=${groupId}`;
+
+        const result = await apiRequest(url);
+        renderPromptsTable(result.data);
+        renderPagination(result.total, result.page, result.totalPages);
+      } catch (err) {
+        console.error('加载提示词失败:', err);
+        showToast('加载提示词失败', 'error');
+      }
+    }
+
+    function renderPromptsTable(prompts) {
+      const container = document.getElementById('promptsTableContainer');
+      
+      if (prompts.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">📝</div>
+            <div class="empty-state-title">暂无提示词</div>
+            <div class="empty-state-desc">点击上方按钮创建您的第一个提示词</div>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = `
+        <table>
+          <thead>
+            <tr>
+              <th>名称</th>
+              <th>分组</th>
+              <th>内容预览</th>
+              <th>统计</th>
+              <th>更新时间</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${prompts.map(p => `
+              <tr>
+                <td>
+                  <span class="prompt-name">${escapeHtml(p.name)}</span>
+                </td>
+                <td>${p.groupName ? `<span class="group-name">${escapeHtml(p.groupName)}</span>` : '-'}</td>
+                <td>
+                  <div class="prompt-content" title="${escapeHtml(p.content)}">${escapeHtml(p.content.substring(0, 60))}</div>
+                </td>
+                <td>
+                  <div style="display: flex; gap: 12px;">
+                    <span class="stat-badge">使用 <strong>${p.useCount}</strong></span>
+                    <span class="stat-badge">修改 <strong>${p.updateCount}</strong></span>
+                  </div>
+                </td>
+                <td>${formatDate(p.updatedAt)}</td>
+                <td>
+                  <div class="action-buttons">
+                    <button class="btn btn-ghost btn-sm" onclick="viewPrompt('${p._id}', '${escapeHtml(p.name)}')">查看</button>
+                    <button class="btn btn-ghost btn-sm" onclick="editPrompt('${p._id}')">编辑</button>
+                    <button class="btn btn-ghost-danger btn-sm" onclick="deletePrompt('${p._id}')">删除</button>
+                  </div>
+                </td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      `;
+    }
+
+    function renderPagination(total, page, totalPages) {
+      const container = document.getElementById('promptsPagination');
+      
+      if (totalPages <= 1) {
+        container.innerHTML = '';
+        return;
+      }
+
+      container.innerHTML = `
+        <button onclick="goToPage(${page - 1})" ${page === 1 ? 'disabled' : ''}>← 上一页</button>
+        <span class="pagination-info">第 ${page} 页，共 ${totalPages} 页 (${total} 条)</span>
+        <button onclick="goToPage(${page + 1})" ${page === totalPages ? 'disabled' : ''}>下一页 →</button>
+      `;
+    }
+
+    function goToPage(page) {
+      currentPage = page;
+      loadPrompts();
+    }
+
+    async function loadGroups() {
+      try {
+        groups = await apiRequest('/api/groups');
+        renderGroupsTable();
+      } catch (err) {
+        console.error('加载分组失败:', err);
+        showToast('加载分组失败', 'error');
+      }
+    }
+
+    function renderGroupsTable() {
+      const container = document.getElementById('groupsTableContainer');
+      
+      if (groups.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">📁</div>
+            <div class="empty-state-title">暂无分组</div>
+            <div class="empty-state-desc">点击上方按钮创建您的第一个分组</div>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = `
+        <table>
+          <thead>
+            <tr>
+              <th>分组名称</th>
+              <th>描述</th>
+              <th>创建时间</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${groups.map(g => `
+              <tr>
+                <td><strong>${escapeHtml(g.name)}</strong></td>
+                <td>${g.description ? escapeHtml(g.description) : '-'}</td>
+                <td>${formatDate(g.createdAt)}</td>
+                <td>
+                  <div class="action-buttons">
+                    <button class="btn btn-ghost btn-sm" onclick="editGroup('${g._id}')">编辑</button>
+                    <button class="btn btn-ghost-danger btn-sm" onclick="deleteGroup('${g._id}')">删除</button>
+                  </div>
+                </td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      `;
+    }
+
+    async function loadUsers() {
+      try {
+        const users = await apiRequest('/api/users');
+        renderUsersTable(users);
+      } catch (err) {
+        console.error('加载用户失败:', err);
+        showToast('加载用户失败', 'error');
+      }
+    }
+
+    function renderUsersTable(users) {
+      const container = document.getElementById('usersTableContainer');
+
+      container.innerHTML = `
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>用户名</th>
+              <th>角色</th>
+              <th>创建时间</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${users.map(u => `
+              <tr>
+                <td>${u.id}</td>
+                <td><strong>${escapeHtml(u.username)}</strong></td>
+                <td>
+                  <span class="badge ${u.role === 'admin' ? 'badge-admin' : 'badge-user'}">
+                    ${u.role === 'admin' ? '管理员' : '普通用户'}
+                  </span>
+                </td>
+                <td>${formatDate(u.created_at)}</td>
+                <td>
+                  <div class="action-buttons">
+                    <button class="btn btn-ghost btn-sm" onclick="editUser(${u.id})">编辑</button>
+                    ${u.id !== 1 ? `<button class="btn btn-ghost-danger btn-sm" onclick="deleteUser(${u.id})">删除</button>` : ''}
+                  </div>
+                </td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      `;
+    }
+
+    function openUserModal(user = null) {
+      document.getElementById('userId').value = user ? user.id : '';
+      document.getElementById('userModalTitle').textContent = user ? '编辑用户' : '新建用户';
+      document.getElementById('userNameInput').value = user ? user.username : '';
+      document.getElementById('userRole').value = user ? user.role : 'user';
+      
+      const passwordGroup = document.getElementById('userPasswordGroup');
+      if (user) {
+        passwordGroup.style.display = 'none';
+        document.getElementById('userPassword').required = false;
+      } else {
+        passwordGroup.style.display = 'block';
+        document.getElementById('userPassword').required = true;
+      }
+      
+      openModal('userModal');
+    }
+
+    function openGroupModal(group = null) {
+      document.getElementById('groupId').value = group ? group._id : '';
+      document.getElementById('groupModalTitle').textContent = group ? '编辑分组' : '新建分组';
+      document.getElementById('groupName').value = group ? group.name : '';
+      document.getElementById('groupDescription').value = group ? group.description : '';
+      openModal('groupModal');
+    }
+
+    function openPromptModal(prompt = null) {
+      document.getElementById('promptId').value = prompt ? prompt._id : '';
+      document.getElementById('promptModalTitle').textContent = prompt ? '编辑提示词' : '新建提示词';
+      document.getElementById('promptName').value = prompt ? prompt.name : '';
+      document.getElementById('promptGroup').value = prompt ? (prompt.groupId || '') : '';
+      document.getElementById('promptContent').value = prompt ? prompt.content : '';
+      openModal('promptModal');
+    }
+
+    async function editUser(id) {
+      try {
+        const user = await apiRequest(`/api/users/${id}`);
+        openUserModal(user);
+      } catch (err) {
+        showToast('获取用户信息失败', 'error');
+      }
+    }
+
+    async function editGroup(id) {
+      try {
+        const group = await apiRequest(`/api/groups/${id}`);
+        openGroupModal(group);
+      } catch (err) {
+        showToast('获取分组信息失败', 'error');
+      }
+    }
+
+    async function editPrompt(id) {
+      try {
+        const prompt = await apiRequest(`/api/prompts/${id}`);
+        openPromptModal(prompt);
+      } catch (err) {
+        showToast('获取提示词信息失败', 'error');
+      }
+    }
+
+    async function viewPrompt(id, name) {
+      try {
+        currentViewPromptId = id;
+        const prompt = await apiRequest(`/api/prompts/${id}`);
+        document.getElementById('viewPromptName').textContent = name;
+        document.getElementById('viewPromptContent').textContent = prompt.content;
+        openModal('viewPromptModal');
+        
+        await apiRequest(`/api/prompts/${id}/use`, { method: 'POST' });
+      } catch (err) {
+        showToast('获取提示词失败', 'error');
+      }
+    }
+
+    async function copyPromptContent() {
+      try {
+        const content = document.getElementById('viewPromptContent').textContent;
+        await navigator.clipboard.writeText(content);
+        showToast('已复制到剪贴板');
+      } catch (err) {
+        showToast('复制失败', 'error');
+      }
+    }
+
+    async function deleteUser(id) {
+      if (!confirm('确定要删除该用户吗？')) return;
+      try {
+        await apiRequest(`/api/users/${id}`, { method: 'DELETE' });
+        showToast('删除成功');
+        loadUsers();
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    }
+
+    async function deleteGroup(id) {
+      if (!confirm('确定要删除该分组吗？')) return;
+      try {
+        await apiRequest(`/api/groups/${id}`, { method: 'DELETE' });
+        showToast('删除成功');
+        loadGroups();
+        if (currentTab === 'prompts') {
+          loadGroupsForFilters();
+          loadPrompts();
+        }
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    }
+
+    async function deletePrompt(id) {
+      if (!confirm('确定要删除该提示词吗？')) return;
+      try {
+        await apiRequest(`/api/prompts/${id}`, { method: 'DELETE' });
+        showToast('删除成功');
+        loadPrompts();
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    }
+
+    document.getElementById('userForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const id = document.getElementById('userId').value;
+      const data = {
+        username: document.getElementById('userNameInput').value,
+        role: document.getElementById('userRole').value
+      };
+      
+      const password = document.getElementById('userPassword').value;
+      if (password) data.password = password;
+
+      try {
+        if (id) {
+          await apiRequest(`/api/users/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify(data)
+          });
+        } else {
+          await apiRequest('/api/users', {
+            method: 'POST',
+            body: JSON.stringify(data)
+          });
+        }
+        closeModal('userModal');
+        showToast(id ? '更新成功' : '创建成功');
+        loadUsers();
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    });
+
+    document.getElementById('groupForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const id = document.getElementById('groupId').value;
+      const data = {
+        name: document.getElementById('groupName').value,
+        description: document.getElementById('groupDescription').value
+      };
+
+      try {
+        if (id) {
+          await apiRequest(`/api/groups/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify(data)
+          });
+        } else {
+          await apiRequest('/api/groups', {
+            method: 'POST',
+            body: JSON.stringify(data)
+          });
+        }
+        closeModal('groupModal');
+        showToast(id ? '更新成功' : '创建成功');
+        loadGroups();
+        if (currentTab === 'prompts') {
+          loadGroupsForFilters();
+          loadPrompts();
+        }
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    });
+
+    document.getElementById('promptForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const id = document.getElementById('promptId').value;
+      const groupId = document.getElementById('promptGroup').value;
+      const data = {
+        name: document.getElementById('promptName').value,
+        content: document.getElementById('promptContent').value
+      };
+      
+      if (groupId) data.groupId = groupId;
+
+      try {
+        if (id) {
+          await apiRequest(`/api/prompts/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify(data)
+          });
+        } else {
+          await apiRequest('/api/prompts', {
+            method: 'POST',
+            body: JSON.stringify(data)
+          });
+        }
+        closeModal('promptModal');
+        showToast(id ? '更新成功' : '创建成功');
+        loadPrompts();
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    });
+
+    document.getElementById('passwordForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const oldPassword = document.getElementById('oldPassword').value;
+      const newPassword = document.getElementById('newPassword').value;
+      const confirmPassword = document.getElementById('confirmPassword').value;
+
+      if (newPassword !== confirmPassword) {
+        showToast('两次输入的新密码不一致', 'error');
+        return;
+      }
+
+      try {
+        await apiRequest('/api/auth/password', {
+          method: 'PUT',
+          body: JSON.stringify({ oldPassword, newPassword })
+        });
+        closeModal('passwordModal');
+        document.getElementById('passwordForm').reset();
+        showToast('密码修改成功');
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    });
+
+    function openPasswordModal() {
+      document.getElementById('passwordForm').reset();
+      openModal('passwordModal');
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    function formatDate(dateStr) {
+      if (!dateStr) return '-';
+      const date = new Date(dateStr);
+      return date.toLocaleString('zh-CN', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const token = getToken();
+      if (!token) {
+        window.location.href = '/';
+        return;
+      }
+
+      loadCurrentUser();
+      loadGroupsForFilters();
+      loadPrompts();
+    });
+  </script>
+</body>
+</html>
